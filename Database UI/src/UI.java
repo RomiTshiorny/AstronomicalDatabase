@@ -143,20 +143,26 @@ public class UI extends JFrame{
 	 * Must be called after creation of object.
 	 */
 	public void initialize() {
-		setResizable(false);
-		setLayout(new BorderLayout());
+		if(control.isConnected()) {
+			setResizable(false);
+			setLayout(new BorderLayout());
+			
+			//base.setSize(400, 400);
+			add(base,BorderLayout.CENTER);
+			base.setLayout(new BorderLayout());
+			bottom.setLayout(new BoxLayout(bottom, BoxLayout.PAGE_AXIS));
+			
+			addMenuBar();
+			addLeftList();
+			addRightLists();
+			addOptions();
+			addDescription();
+			base.add(bottom,BorderLayout.SOUTH);
+		}
+		else {
+			
+		}
 		
-		//base.setSize(400, 400);
-		add(base,BorderLayout.CENTER);
-		base.setLayout(new BorderLayout());
-		bottom.setLayout(new BoxLayout(bottom, BoxLayout.PAGE_AXIS));
-		
-		addMenuBar();
-		addLeftList();
-		addRightLists();
-		addOptions();
-		addDescription();
-		base.add(bottom,BorderLayout.SOUTH);
 		
 		pack();
 		setLocationRelativeTo(null);
@@ -714,14 +720,40 @@ public class UI extends JFrame{
 			else {
 				
 				theButton.setText("Edit");
+				ArrayList<String> inputs = new ArrayList<String>();
 				for(JTextArea field:theFields) {
+					inputs.add(field.getText());
 					field.setEnabled(false);
 				}
 				
-				for(int i = 0; i < propertyLabels.size();i++) {
-					System.out.println(propertyLabels.get(i) + " : " + theFields.get(i).getText());
-				}
 				
+				
+				int selectedIndex = rightLists.get(control.getSelectedIndex()).getSelectedIndex();			
+				control.update(inputs);
+				
+				control.reloadTables();
+				reloadTables();
+				
+				leftList.setSelectedValue(control.getLeftSelection(), true);
+				rightLists.get(control.getSelectedIndex()).setSelectedIndex(selectedIndex);
+				rightLists.get(control.getSelectedIndex()).setBackground(Color.LIGHT_GRAY);
+				control.setRightSelection(rightLists.get(control.getSelectedIndex()).getSelectedValue());
+				
+				if(control.hasMoreDepth()) {
+					forward.setEnabled(true);
+				}
+				back.setEnabled(true);
+				addItem.setEnabled(true);
+				
+				control.getDetails();
+				propertyLabels = control.getSelectedAttributes();
+				propertyDescriptions = control.getSelectedDetails();
+				
+				
+				resetDetails();
+				edit.setEnabled(true);
+				edit.setEnabled(true);
+				delete.setEnabled(true);
 				
 			}
 			toggle = !toggle;

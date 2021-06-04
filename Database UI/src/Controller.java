@@ -74,11 +74,17 @@ public class Controller {
 	private ArrayList<String> selectedObjectDetails;
 	
 	/**
+	 * Boolean for checking if the database is connected
+	 */
+	private boolean connected;
+	
+	/**
 	 * Constructor for the controller object.
 	 */
 	public Controller() {
 		//SQL Connection code
 		database = new SQLConnection();
+		connected = database.isConnected();
 		
 		rightLists = new ArrayList<DefaultListModel<String>>();
 		indexStack = new Stack<Integer>();
@@ -101,6 +107,14 @@ public class Controller {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	/**
+	 * Getter for the connection status;
+	 * @return True if connected to database, false otherwise
+	 */
+	public boolean isConnected() {
+		return connected;
 	}
 	
 	/**
@@ -266,6 +280,88 @@ public class Controller {
 			}
         }
 		
+	}
+	
+	/**
+	 * Method for updating the attributes in the database
+	 * @param values the values to update to
+	 */
+	public void update(ArrayList<String> values) {
+		try {
+			updateQuery(values);
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Update the attributes in the database
+	 * @param values the values to update to
+	 * @throws SQLException
+	 */
+	public void updateQuery(ArrayList<String> values) throws SQLException{
+			
+		String updatePairs = "";
+		String nameLabel = "";
+		for(int i = 0; i < selectedObjectAttributes.size(); i++) {
+			String attribute = selectedObjectAttributes.get(i);
+			boolean inqoutes = false;
+			if(attribute.contains("Name")) {
+				nameLabel =  attribute;
+				inqoutes = true;
+			}
+			if(attribute.equals("RightAscension") || attribute.equals("Declination") 
+					|| attribute.equals("DateDiscovered")) {
+				inqoutes = true;
+			}
+			
+			String value = values.get(i);
+			
+			
+			if(value.equals("")) {
+				continue;
+			}
+			
+			value = inqoutes? "'" + value + "'" : value;
+			
+			if(i == 0) {
+				updatePairs += attribute + " = " + value;
+			}
+			else {
+				updatePairs += ", " + attribute + " = " + value;
+			}
+			
+			
+		}
+		
+		String id;
+		switch(rightTitles.get(selectedIndex)) {
+			case "GalaxyCluster":
+				id = "ClusterID";
+				break;
+			case "GalaxyGroup":
+				id = "GroupID";
+				break;
+			case "SolarSystem":
+				id = "SystemID";
+				break;
+			case "NaturalSatellite":
+				id = "SatelliteID";
+				break;
+			default:
+				id = rightTitles.get(selectedIndex) + "ID";
+				break;
+		}
+		
+		ResultSet pickSet = database.query("SELECT " + id
+											+ " FROM " + rightTitles.get(selectedIndex)
+											+ " WHERE " + nameLabel + " = '" + rightSelected + "'");
+
+		pickSet.next();
+		String theID = pickSet.getString(1);
+		database.update("UPDATE " + rightTitles.get(selectedIndex) 
+						+ " SET " + updatePairs +" WHERE " + id + " = " + theID);
 	}
 	
 	/**
@@ -471,6 +567,9 @@ public class Controller {
 				break;
 			case "SolarSystem":
 				id = "SystemID";
+				break;
+			case "NaturalSatellite":
+				id = "SatelliteID";
 				break;
 			default:
 				id = leftTitle + "ID";

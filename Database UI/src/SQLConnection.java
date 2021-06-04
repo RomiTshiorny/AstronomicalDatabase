@@ -13,6 +13,8 @@ import java.util.Properties;
  */
 public class SQLConnection {
 
+	
+		private Boolean connected;
 		/**
 		 * Connection to database
 		 */
@@ -27,6 +29,8 @@ public class SQLConnection {
 		 * Constructor for the connection object
 		 */
 		public SQLConnection() {
+			
+			connected = false;
 			String connectionUrl = "jdbc:sqlserver://localhost\\ROMISQLSERVER";
 			
 			Properties info = new Properties();
@@ -40,14 +44,13 @@ public class SQLConnection {
 				try {
 					statement = connection.createStatement();
 					System.out.println("Connection Successful");
+					connected = true;
 					
 					
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} 
 			
@@ -71,5 +74,13 @@ public class SQLConnection {
 		 */
 		public int update(String sql) throws SQLException{
 			return statement.executeUpdate(sql);
+		}
+		
+		/**
+		 * Method for checking connection success
+		 * @return True if connection was successful, false otherwise.
+		 */
+		public boolean isConnected() {
+			return connected;
 		}
 }
