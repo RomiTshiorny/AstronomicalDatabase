@@ -13,17 +13,69 @@ import javax.swing.DefaultListModel;
  */
 public class Controller {
 	
+	/**
+	 * Connection to the database
+	 */
 	private SQLConnection database;
+	
+	/**
+	 * Data behind left list
+	 */
 	private DefaultListModel<String> leftList;
+	
+	/**
+	 * Data behind right lists
+	 */
 	private ArrayList<DefaultListModel<String>> rightLists;
+	
+	/**
+	 * Column name of left list
+	 */
 	private String leftTitle;
+	
+	/**
+	 * Column name of right lists
+	 */
 	private ArrayList<String> rightTitles;
+	
+	/**
+	 * Selected values in each list
+	 */
 	private String leftSelected, rightSelected;
+	
+	/**
+	 * Stack for keeping track of columns for back action
+	 */
 	private Stack<String> titleStack;
+	
+	/**
+	 * Stack for keeping track of selections for back action
+	 */
 	private Stack<String> selectStack;
+	
+	/**
+	 * Stack for keeping track of selection indices for back action
+	 */
 	private Stack<Integer> indexStack;
+	
+	/**
+	 * The index for which right table is currently being viewed/modified
+	 */
 	private int selectedIndex;
 	
+	/**
+	 * The column names of attributes for the selected object
+	 */
+	private ArrayList<String> selectedObjectAttributes;
+	
+	/**
+	 * The attribute details for each column of the selected object
+	 */
+	private ArrayList<String> selectedObjectDetails;
+	
+	/**
+	 * Constructor for the controller object.
+	 */
 	public Controller() {
 		//SQL Connection code
 		database = new SQLConnection();
@@ -50,12 +102,328 @@ public class Controller {
 		}
 		
 	}
-	public void queryDetails() {
+	
+	/**
+	 * Setter for the index of the right column
+	 * @param index the index
+	 */
+	public void setSelectedIndex(int index) {
+		selectedIndex = index;
+	}
+	
+	/**
+	 * Setter for the left selected value
+	 * @param selection
+	 */
+	public void setLeftSelection(String selection) {
+		leftSelected = selection;
+	}
+	
+	/**
+	 * Setter for the right selected value
+	 * @param selection
+	 */
+	public void setRightSelection(String selection) {
+		rightSelected = selection;
+	}
+	
+	/**
+	 * Getter for the index of the right column
+	 * @return the selected index
+	 */
+	public int getSelectedIndex() {
+		return selectedIndex;
+	}
+	
+	/**
+	 * Getter for the value selected by the left list
+	 * @return left selected value
+	 */
+	public String getLeftSelection() {
+		return leftSelected;
+	}
+	/**
+	 * Getter for the value selected by the right list
+	 * @return right selected value
+	 */
+	public String getRightSelection() {
+		return rightSelected;
+	}
+	
+	/**
+	 * Getter for the column name of the left list;
+	 * @return left selected value
+	 */
+	public String getLeftTitle() {
+		return leftTitle;
+	}
+	
+	/**
+	 * Getter for the column name of the right list given an index;
+	 * @param index the index
+	 * @return left selected value
+	 */
+	public String getRightTitle(int index) {
+		return  rightTitles.size() > 0 ? rightTitles.get(index) : null;
+	}
+	
+	/**
+	 * The list of values for the given left column
+	 * @return DefaultListModel a list of the items
+	 */
+	public DefaultListModel<String> getLeftList(){
+		return leftList;
+	}
+	
+	/**
+	 * The list of values for the given right column at the provided index
+	 * @param index the index
+	 * @return DefaultListModel a list of the items
+	 */
+	public DefaultListModel<String> getRightList(int index){
+		return  rightLists.size() > 0 ? rightLists.get(index) : null;
+	}
+	
+	/**
+	 * Get the list of all the lists
+	 * @return list of all right lists
+	 */
+	public ArrayList<DefaultListModel<String>> getRightLists(){
+		return rightLists;
+	}
+	
+	/**
+	 * Getter for object attributes
+	 * @return an Arraylist of the columns
+	 */
+	public ArrayList<String> getSelectedAttributes(){
+		return selectedObjectAttributes;
+	}
+	
+	/**
+	 * Getter for object details
+	 * @return an Arraylist of the column values
+	 */
+	public ArrayList<String> getSelectedDetails(){
+		return selectedObjectDetails;
+	}
+	
+	/**
+	 * Method for getting all the attributes of the selected object
+	 */
+	public void getDetails() {
+		try {
+			queryDetails();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * Query the details for an object in a designated table
+	 * @throws SQLException 
+	 */
+	private void queryDetails() throws SQLException {
+		
+		selectedObjectAttributes = new ArrayList<String>();
+		selectedObjectDetails = new ArrayList<String>();
+		
+		//Get the column name of the 'Name' column
+		ResultSet pickSet = database.query("SELECT *"
+				+ " FROM " + rightTitles.get(selectedIndex) );
+		ResultSetMetaData pickMetadata = pickSet.getMetaData();
+		String pickNameCol = "";
+		for(int i = 1; i <= pickMetadata.getColumnCount(); i++) {
+			String col = pickMetadata.getColumnLabel(i);
+			if(col.contains("Name")) { 						
+				pickNameCol = col;
+				break;
+				}
+		}
+
+		ResultSet resultSet = database.query("SELECT * FROM " + rightTitles.get(selectedIndex) 
+									+ " WHERE " + pickNameCol + " = '" + rightSelected + "'");
+		ResultSetMetaData metadata = resultSet.getMetaData();
+		
+		
+		ArrayList<Integer> IDloc = new ArrayList<Integer>(); //For avoiding displaying ID's
+		for(int i = 1; i <= metadata.getColumnCount(); i++) {
+			
+			String s = metadata.getColumnLabel(i);
+			if(s.contains("ID")) {
+				IDloc.add(i);
+			}
+			else {
+				selectedObjectAttributes.add(s);
+			}
+			
+		}
+		while (resultSet.next()) {
+			for(int i = 1; i <= metadata.getColumnCount(); i++) {
+				if(!IDloc.contains(i)) {
+					selectedObjectDetails.add(resultSet.getString(i));
+				}
+				
+			}
+        }
 		
 	}
-	public void insert() {
-		System.out.println("Insert into "+ rightTitles.get(selectedIndex)); //TODO add insertion functionality
+	
+	/**
+	 * Insert values into the designated table
+	 * @param name the Name of the object to insert
+	 */
+	public void insert(String name) {
+		try {
+			insertQuery(name);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
+	
+	/**
+	 * Insertion call to database
+	 * @param name value to insert
+	 * @throws SQLException
+	 */
+	private void insertQuery(String name) throws SQLException{
+		//Get the column name of the 'Name' column
+		ResultSet pickSet = database.query("SELECT *"
+				+ " FROM " + leftTitle);
+		ResultSetMetaData pickMetadata = pickSet.getMetaData();
+		String pickNameCol = "";
+		ArrayList<String> IDList = new ArrayList<String>();
+		for(int i = 1; i <= pickMetadata.getColumnCount(); i++) {
+			String col = pickMetadata.getColumnLabel(i);
+			if(col.contains("Name")) { 						
+				pickNameCol = col;
+				break;
+			}
+			
+			if(col.contains("ID")) {
+				IDList.add(col);
+			}
+			
+		}
+		
+		//Build ID retrieval string
+		String selectedIDs = "";
+		selectedIDs += IDList.get(0);
+		for(int i = 1; i < IDList.size(); i++) {
+			selectedIDs += ", " + IDList.get(i);
+		}
+	
+		ResultSet resultSet = database.query("SELECT " + selectedIDs +" FROM " + leftTitle + " WHERE " + pickNameCol + " = " + "'" + leftSelected + "'");
+		ResultSetMetaData metadata = resultSet.getMetaData();
+		
+		
+		String IDs = "";
+		while (resultSet.next()) {
+			for(int i = 1; i <= metadata.getColumnCount(); i++) {
+				if(i==1) {
+					IDs += (resultSet.getString(i));
+				}
+				else {
+					IDs += (", " + resultSet.getString(i));
+				}
+				
+			}
+			
+        }
+		
+		
+		//Get the column name of the 'Name' column
+		pickSet = database.query("SELECT *"
+				+ " FROM " + rightTitles.get(selectedIndex) );
+		pickMetadata = pickSet.getMetaData();
+		String pickInsertNameCol = "";
+		for(int i = 1; i <= pickMetadata.getColumnCount(); i++) {
+			String col = pickMetadata.getColumnLabel(i);
+			if(col.contains("Name")) { 						
+				pickInsertNameCol = col;
+				break;
+				}
+		}
+		
+		if(rightTitles.get(selectedIndex).contains("Satellite")) {
+			
+			database.update("INSERT INTO Satellite" + "(" + selectedIDs +")"
+					+ " VALUES(" + IDs + ")");
+			
+			
+			pickSet = database.query("SELECT SatelliteID from Satellite");
+			String id = "1";
+			while(pickSet.next()) {
+				id = pickSet.getString("SatelliteID");
+			}
+			database.update("INSERT INTO " + rightTitles.get(selectedIndex) + "(SatelliteID, " + pickInsertNameCol + ", " + selectedIDs +")"
+					+ " VALUES(" + id + ", '" + name +"', " + IDs + ")");
+			
+		}
+		else {
+			database.update("INSERT INTO " + rightTitles.get(selectedIndex) + "(" + pickInsertNameCol + ", " + selectedIDs +")"
+							+ " VALUES('" + name +"', " + IDs + ")");
+		}
+	}
+	
+	
+	/**
+	 * Method for deleting a row
+	 */
+	public void delete() {
+		try {
+			deleteQuery();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		reloadTables();
+	}
+	
+	/**
+	 * Deletion call to database
+	 * @throws SQLException
+	 */	
+	private void deleteQuery() throws SQLException{
+		
+		ResultSet pickSet = database.query("SELECT *"
+				+ " FROM " + rightTitles.get(selectedIndex));
+		ResultSetMetaData pickMetadata = pickSet.getMetaData();
+		String pickNameCol = "";
+		for(int i = 1; i <= pickMetadata.getColumnCount(); i++) {
+			String col = pickMetadata.getColumnLabel(i);
+			if(col.contains("Name")) { 						
+				pickNameCol = col;
+				break;
+			}
+		}
+		
+		
+		if(rightTitles.get(selectedIndex).contains("Satellite")) {
+			
+			pickSet = database.query("SELECT SatelliteID"
+					+ " FROM  " + rightTitles.get(selectedIndex) 
+					+ " WHERE " + pickNameCol + " = '" + rightSelected + "'");
+			
+			String id = "1";
+			while(pickSet.next()) {
+				id = pickSet.getString(1);
+			}
+			
+			database.update("DELETE FROM " + rightTitles.get(selectedIndex) 
+			+ " WHERE " + pickNameCol + " = '" + rightSelected + "'");
+			
+			database.update("DELETE FROM Satellite WHERE SatelliteID = " +id);
+		}
+		else {
+			database.update("DELETE FROM " + rightTitles.get(selectedIndex) 
+			+ " WHERE " + pickNameCol + " = '" + rightSelected + "'");
+		}
+		
+		
+	}
+	
+	/**
+	 * Reload the tables with the values from the database on the updated chosen parameters
+	 */
 	public void reloadTables() {
 		try {
 			leftListQuery();
@@ -65,45 +433,16 @@ public class Controller {
 			e.printStackTrace();
 		}
 	}
-	public void setSelectedIndex(int index) {
-		selectedIndex = index;
-	}
-	public void setLeftSelection(String selection) {
-		leftSelected = selection;
-	}
-	public void setRightSelection(String selection) {
-		rightSelected = selection;
-	}
-	public int getSelectedIndex() {
-		return selectedIndex;
-	}
-	public String getLeftSelection() {
-		return leftSelected;
-	}
-	public String getRightSelection() {
-		return rightSelected;
-	}
-	public String getLeftTitle() {
-		return leftTitle;
-	}
-	public String getRightTitle(int index) {
-		return  rightTitles.size() > 0 ? rightTitles.get(index) : null;
-	}
-	public DefaultListModel<String> getLeftList(){
-		return leftList;
-	}
-	public DefaultListModel<String> getRightList(int index){
-		return  rightLists.size() > 0 ? rightLists.get(index) : null;
-	}
-	public ArrayList<DefaultListModel<String>> getRightLists(){
-		return rightLists;
-	}
-	public void leftListQuery() throws SQLException {
+	/**
+	 * Query to populate the left list with values from the data base for the given column
+	 * @throws SQLException
+	 */
+	private void leftListQuery() throws SQLException {
 		ResultSet resultSet = database.query("SELECT * FROM " + leftTitle);
 		ResultSetMetaData metadata = resultSet.getMetaData();
 		
 		String nameCol = "";
-		for(int i = 1; i < metadata.getColumnCount(); i++) {
+		for(int i = 1; i <= metadata.getColumnCount(); i++) {
 			String col = metadata.getColumnLabel(i);
 			if(col.contains("Name")) {
 				nameCol = col;
@@ -116,7 +455,12 @@ public class Controller {
             					
         }
 	}
-	public void rightListQuery() throws SQLException {
+	
+	/**
+	 * Query to populate the right list(s) with values from the data base for the given column(s)
+	 * @throws SQLException
+	 */
+	private void rightListQuery() throws SQLException {
 		String id;
 		switch(leftTitle) {
 			case "GalaxyCluster":
@@ -137,9 +481,9 @@ public class Controller {
 											+ " FROM " + leftTitle);
 		ResultSetMetaData pickMetadata = pickSet.getMetaData();
 		String pickNameCol = "";
-		for(int i = 1; i < pickMetadata.getColumnCount(); i++) {
+		for(int i = 1; i <= pickMetadata.getColumnCount(); i++) {
 			String col = pickMetadata.getColumnLabel(i);
-			if(col.contains("Name")) { 						//Might be an issue when joining? First one would always be chosen.
+			if(col.contains("Name")) { 						
 				pickNameCol = col;
 				break;
 			}
@@ -155,7 +499,7 @@ public class Controller {
 			ResultSetMetaData metadata = resultSet.getMetaData();
 			
 			String nameCol = "";
-			for(int i = 1; i < metadata.getColumnCount(); i++) {
+			for(int i = 1; i <= metadata.getColumnCount(); i++) {
 				String col = metadata.getColumnLabel(i);
 				if(col.contains("Name")) { 						//Might be an issue when joining? First one would always be chosen.
 					nameCol = col;
@@ -167,13 +511,13 @@ public class Controller {
 				rightLists.get(index).addElement(resultSet.getString(nameCol));
 	            					
 	        }
-			index++;
-			
+			index++;	
 		}
-		
-		
-		
 	}
+	
+	/**
+	 * Method for shifting the focus to down to a child object and its children
+	 */
 	public void moveInto() {
 		
 		String rightTitle = rightTitles.get(selectedIndex);
@@ -184,6 +528,10 @@ public class Controller {
 		rightTitles = getChildren(rightTitle);
 		reloadTables();
 	}
+	
+	/**
+	 * Method for shifting back from the child to its parent
+	 */
 	public void moveBack() {
 		
 		leftTitle = titleStack.pop();
@@ -193,7 +541,12 @@ public class Controller {
 		leftSelected = selectStack.pop();
 		reloadTables();
 	}
-	//Helper method to make dealing with multi-child DB objects easier
+	/**
+	 * Helper method to make dealing with multi-child DB objects easier
+	 * Lets the controller know which object has what children
+	 * @param parent the table name
+	 * @return a list of all possible child tables
+	 */
 	private ArrayList<String> getChildren(String parent){
 		ArrayList<String> children = new ArrayList<String>();
 		if(parent.equals("GalaxyCluster")) {
@@ -217,19 +570,26 @@ public class Controller {
 		}
 		else if(parent.equals("Planet")) {
 			children.add("NaturalSatellite");
-			children.add("ArtificialSatellite");
 			
 		}
 		return children;
 	}
+	/**
+	 * Method for knowing if the currently selected object has possible children
+	 * @return True if children exist, false otherwise
+	 */
 	public boolean hasMoreDepth() {
 		return hasChildren(rightTitles.get(selectedIndex));
 	}
-	//Helper method for knowing if there is more depth to a branch.
+	/**
+	 * Helper method for knowing if there is more depth to an object hierarchy .
+	 * @param parent the object name
+	 * @return True if the given object has children, false otherwise
+	 */
 	private boolean hasChildren(String parent) {
 		return !(parent.equals("Nebula") || parent.equals("RogueObject") 
 				|| parent.equals("Star") || parent.equals("BlackHole")
-				|| parent.equals("NaturalSatellite") || parent.equals("ArtificialSatellite")
+				|| parent.equals("NaturalSatellite")
 				|| parent.equals("Comet") || parent.equals("Asteroid"));
 	}
 	

@@ -1,6 +1,7 @@
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -9,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
+import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -16,13 +18,17 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 
 /**
  * UI Class that is in charge of front-end visible to the user
@@ -47,9 +53,24 @@ public class UI extends JFrame{
 	private JPanel base;
 	
 	/**
+	 * Bottom panel with descriptions and buttons;
+	 */
+	private JPanel bottom;
+	
+	/**
+	 * Panel with all descriptions
+	 */
+	private JPanel details;
+	
+	/**
+	 * Panel for detail buttons
+	 */
+	JPanel detailButtons;
+	
+	/**
 	 * Buttons for navigating UI
 	 */
-	private JButton back, addItem, forward;
+	private JButton back, addItem, forward, edit, delete;
 	
 	/**
 	 * List for the current object we are viewing
@@ -75,6 +96,16 @@ public class UI extends JFrame{
 	 */
 	private Controller control;
 	
+	
+	/**
+	 * Array of labels for the descriptions
+	 */
+	private ArrayList<String> propertyLabels;
+	
+	/**
+	 * Description for each property.
+	 */
+	private ArrayList<String> propertyDescriptions;
 	/**
 	 * Constructor for the UI
 	 * @param Title for user interface
@@ -82,10 +113,15 @@ public class UI extends JFrame{
 	public UI(String title) {
 		super(title);
 		
+		propertyLabels = new ArrayList<String>();
+		propertyDescriptions = new ArrayList<String>();
 		//How the UI will interact with the database
 		control = new Controller();
 		
+		
 		base = new JPanel();
+		bottom = new JPanel();
+		details = new JPanel();
 		
 		//Just to make the UI look nicer
 		try {
@@ -107,45 +143,143 @@ public class UI extends JFrame{
 	 * Must be called after creation of object.
 	 */
 	public void initialize() {
+		setResizable(false);
 		setLayout(new BorderLayout());
 		
 		//base.setSize(400, 400);
 		add(base,BorderLayout.CENTER);
 		base.setLayout(new BorderLayout());
+		bottom.setLayout(new BoxLayout(bottom, BoxLayout.PAGE_AXIS));
 		
 		addMenuBar();
 		addLeftList();
 		addRightLists();
 		addOptions();
-		back.setEnabled(false);
-	
+		addDescription();
+		base.add(bottom,BorderLayout.SOUTH);
 		
 		pack();
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
 	}
-	
+
 	/**
 	 * Helper Method to redraw the frame to include new or removed panels
 	 */
 	private void reinitialize() {
 		setLayout(new BorderLayout());
 		
+		remove(bottom);
 		remove(base);
 		
+		
 		base = new JPanel();
-		add(base,BorderLayout.CENTER);
 		base.setLayout(new BorderLayout());
+		add(base,BorderLayout.CENTER);
+
+		bottom = new JPanel();
+		bottom.setLayout(new BoxLayout(bottom, BoxLayout.PAGE_AXIS));
+		
 		
 		addMenuBar();
 		addLeftList();
 		addRightLists();
 		addOptions();
+		addDescription();
+		base.add(bottom,BorderLayout.SOUTH);
+		
 	
 		pack();
 		revalidate();
 		repaint();
+	}
+	
+	/**
+	 * Repaint the details/descriptions
+	 */
+	private void resetDetails() {
+		bottom.remove(details);
+		bottom.remove(detailButtons);
+		details = new JPanel();
+		detailButtons = new JPanel();
+		addDescription();
+		
+		revalidate();
+		repaint();
+		pack();
+	}
+	
+	private void addDescription() {
+		
+		/*Description Text*/
+		JPanel screen = new JPanel();
+		screen.setLayout(new BorderLayout());
+		
+		JPanel descriptors = new JPanel();
+		descriptors.setLayout(new BoxLayout(descriptors, BoxLayout.PAGE_AXIS));
+		JPanel descriptions = new JPanel();
+		descriptions.setLayout(new BoxLayout(descriptions, BoxLayout.PAGE_AXIS));
+		
+		
+		for(String s:propertyLabels) {
+			
+			JTextArea field = new JTextArea(s + ":");
+			field.setEnabled(false);
+			descriptors.add(field);
+		}
+		
+		ArrayList<JTextArea> entryFields = new ArrayList<JTextArea>();
+		for(String s:propertyDescriptions) {
+			JTextArea field = new JTextArea(s);
+			entryFields.add(field);
+			field.setEnabled(false);
+			descriptions.add(field);
+			
+		}
+		
+		screen.add(descriptors,BorderLayout.WEST);
+		screen.add(descriptions,BorderLayout.EAST);
+		details.add(screen);
+		bottom.add(details);
+		
+		/*Description Buttons*/
+		
+		detailButtons = new JPanel();
+		edit = new JButton("Edit");
+		edit.setEnabled(false);
+		edit.addActionListener(new EditButtonListener(entryFields,edit));
+		delete = new JButton("Delete");
+		delete.setEnabled(false);
+		delete.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				control.delete();
+				int selectedIndex = leftList.getSelectedIndex();
+				reloadTables();
+				
+				leftList.setSelectedIndex(selectedIndex);
+				rightLists.get(control.getSelectedIndex()).setBackground(Color.LIGHT_GRAY);
+				
+				if(control.hasMoreDepth()) {
+					forward.setEnabled(true);
+				}
+				back.setEnabled(true);
+				addItem.setEnabled(true);
+				
+				control.getDetails();
+				propertyLabels = new ArrayList<String>();
+				propertyDescriptions = new ArrayList<String>();
+				resetDetails();
+				
+			}
+			
+		});
+		detailButtons.add(edit,BorderLayout.SOUTH);
+		detailButtons.add(delete,BorderLayout.SOUTH);
+		bottom.add(detailButtons);
+	
 	}
 	
 	/**
@@ -158,6 +292,7 @@ public class UI extends JFrame{
 		JPanel screen = new JPanel();
 		
 		back = new JButton("<");
+		back.setEnabled(false);
 		back.setToolTipText("Back");
 		back.addActionListener(new ActionListener() {
 
@@ -174,18 +309,56 @@ public class UI extends JFrame{
 				if(that.control.getLeftTitle().equals("GalaxyCluster")) {
 					back.setEnabled(false);
 				}
+				else {
+					back.setEnabled(true);
+				}
 				forward.setEnabled(true);
+				addItem.setEnabled(true);
+				
+				control.getDetails();
+				propertyLabels = control.getSelectedAttributes();
+				propertyDescriptions = control.getSelectedDetails();
+				
+				resetDetails();
+				
+				edit.setEnabled(true);
+				delete.setEnabled(true);
 				
 			}
 		});
 		
 		addItem = new JButton("+");
+		addItem.setEnabled(false);
 		addItem.setToolTipText("Add new entry");
 		addItem.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				control.insert(); //TODO add insertion functionality
+				String name = JOptionPane.showInputDialog("Enter name of object to add to " + control.getLeftSelection());
+				if(name != null && name.length() > 0) {
+					control.insert(name);
+					control.reloadTables();
+					reloadTables();
+					
+					leftList.setSelectedValue(that.control.getLeftSelection(), true);
+					control.setRightSelection(name);
+					rightLists.get(control.getSelectedIndex()).setSelectedValue(name, true);
+					rightLists.get(control.getSelectedIndex()).setBackground(Color.LIGHT_GRAY);
+					
+					if(control.hasMoreDepth()) {
+						forward.setEnabled(true);
+					}
+					back.setEnabled(true);
+					addItem.setEnabled(true);
+					
+					control.getDetails();
+					propertyLabels = control.getSelectedAttributes();
+					propertyDescriptions = control.getSelectedDetails();
+					resetDetails();
+					edit.setEnabled(true);
+					delete.setEnabled(true);
+					
+				}
 				
 			}
 		});
@@ -208,6 +381,13 @@ public class UI extends JFrame{
 					that.back.setEnabled(true);
 					that.forward.setEnabled(false);
 					
+					that.control.setRightSelection(null);
+					
+					propertyLabels = new ArrayList<String>();
+					propertyDescriptions = new ArrayList<String>();
+					resetDetails();
+					
+					addItem.setEnabled(false);
 				}
 			}
 		});
@@ -215,7 +395,9 @@ public class UI extends JFrame{
 		screen.add(back);
 		screen.add(addItem);
 		screen.add(forward);
-		base.add(screen,BorderLayout.SOUTH);
+		//bottom.add(screen,BorderLayout.CENTER);
+		bottom.add(screen);
+		
 		
 	}
 	
@@ -241,6 +423,10 @@ public class UI extends JFrame{
 					that.control.setLeftSelection(that.leftList.getSelectedValue());
 					that.control.reloadTables();
 					that.reloadRightTable();
+					
+					propertyLabels = new ArrayList<String>();
+					propertyDescriptions = new ArrayList<String>();
+					resetDetails();
 				}
 				
 			}
@@ -328,6 +514,29 @@ public class UI extends JFrame{
 	private void addMenuBar() {
 		JMenuBar bar = new JMenuBar();
 		JMenu about = new JMenu("About");
+		about.addMenuListener(new MenuListener() {
+
+			@Override
+			public void menuSelected(MenuEvent e) {
+				JOptionPane.showMessageDialog(base,"TCSS 445 Database UI\n"
+						+ "							Some functionality not fully implemented due to time constrains\n"
+						+ "							Author: Romi Tshiorny", "About", JOptionPane.PLAIN_MESSAGE);
+				
+			}
+
+			@Override
+			public void menuDeselected(MenuEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void menuCanceled(MenuEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
 		bar.add(about);
 		add(bar,BorderLayout.NORTH);
 	}
@@ -393,7 +602,16 @@ public class UI extends JFrame{
 				else {
 					forward.setEnabled(false);
 				}
+				control.getDetails();
 				
+				propertyLabels = control.getSelectedAttributes();
+				propertyDescriptions = control.getSelectedDetails();
+				
+				
+				resetDetails();
+				
+				edit.setEnabled(true);
+				delete.setEnabled(true);
 			}
 			
 		}
@@ -430,6 +648,9 @@ public class UI extends JFrame{
 			}
 			if(theList.getModel().getSize() <= 0) {
 				forward.setEnabled(false);
+				propertyLabels = new ArrayList<String>();
+				propertyDescriptions = new ArrayList<String>();
+				resetDetails();
 			}
 			else {
 				
@@ -440,6 +661,10 @@ public class UI extends JFrame{
 					forward.setEnabled(false);
 				}
 			}
+			
+			
+			
+			addItem.setEnabled(true);
 		}
 
 		@Override
@@ -458,6 +683,52 @@ public class UI extends JFrame{
 		}
 	}
 	
+	
+	/**
+	 * Private listener for events that happen on the edit button.
+	 * @author Romi Tshiorny
+	 *
+	 */
+	private class EditButtonListener implements ActionListener{
+
+		private ArrayList<JTextArea> theFields;
+		private JButton theButton;
+		private boolean toggle;
+		public EditButtonListener(ArrayList<JTextArea> fields, JButton button) {
+			toggle = true;
+			theFields=fields;
+			theButton = button;
+		}
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			//On edit press
+			if(toggle) {
+				
+				theButton.setText("Update");
+				for(JTextArea field:theFields) {
+					field.setEnabled(true);
+				}
+
+			}
+			//On update press
+			else {
+				
+				theButton.setText("Edit");
+				for(JTextArea field:theFields) {
+					field.setEnabled(false);
+				}
+				
+				for(int i = 0; i < propertyLabels.size();i++) {
+					System.out.println(propertyLabels.get(i) + " : " + theFields.get(i).getText());
+				}
+				
+				
+			}
+			toggle = !toggle;
+			
+		}
+		
+	}
 	/**
 	 * Main method where program execution starts
 	 * @param args

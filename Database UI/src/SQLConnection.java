@@ -13,8 +13,19 @@ import java.util.Properties;
  */
 public class SQLConnection {
 
+		/**
+		 * Connection to database
+		 */
 		private Connection connection;
+		
+		/**
+		 * Database query
+		 */
 		private Statement statement;
+		
+		/**
+		 * Constructor for the connection object
+		 */
 		public SQLConnection() {
 			String connectionUrl = "jdbc:sqlserver://localhost\\ROMISQLSERVER";
 			
@@ -42,7 +53,23 @@ public class SQLConnection {
 			
 			
 		}
+		/**
+		 * Method for queries to the database
+		 * @param sql the SQL statement to query the database with
+		 * @return the ResultSet from the query
+		 * @throws SQLException
+		 */
 		public ResultSet query(String sql) throws SQLException {
 			return statement.executeQuery(sql);
+		}
+		
+		/**
+		 * Method for updating the database
+		 * @param sql the SQL statement to update the database with
+		 * @return the int returned by the update
+		 * @throws SQLException
+		 */
+		public int update(String sql) throws SQLException{
+			return statement.executeUpdate(sql);
 		}
 }
