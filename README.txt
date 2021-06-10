@@ -33,3 +33,5 @@ The UI is able to do SELECT, INSERT, UPDATE, and DELETE calls on the database.
 
 	The DELETE utility can be seen whenever the user selects an object, and pressed delete.
 	The object is promptly removed from the table and the database.
+	
+NOTE: Note every table gets its fully utility used in this program due to time constraints, however a good amount of the utility is implemented.
