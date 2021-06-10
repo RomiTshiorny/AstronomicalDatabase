@@ -1,8 +1,0 @@
-<<<<<<< HEAD
-localhost\ROMISQLSERVER
-sa
-romisqlpass
-Tshiorny_Romi_db
-=======
-localhost\\ROMISQLSERVER
->>>>>>> branch 'master' of https://github.com/RomiTshiorny/AstronomicalDatabase
