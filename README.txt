@@ -1,6 +1,4 @@
-To run my UI program, first extract the provide "Tshiorny_Romi_UI.zip".
-
-Once file contents are extracted you should go into the "connect.txt" and
+Once file contents are downloaded you should go into the "connect.txt" and
 replace the given credentials with the ones you must use to access your data
 base. The format of the file is as follows:
 
