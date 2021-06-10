@@ -1,3 +1,6 @@
+NOTE: Executing might be a bit of an arduous process due to needing to install libaries for the SQL connection and configuring the enviroment (I used eclipse).
+Screenshots are provided for a glimpse at the application.
+
 A database file "Tshiorny_Romi_backend.sql" is provided to create the database on your local machine. (Done in MicrosoftSQL).
 
 All necessary files to execute are in src/model
