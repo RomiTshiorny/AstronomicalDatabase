@@ -1,3 +1,5 @@
+A database file "Tshiorny_Romi_backend.sql" is provided to create the database on your local machine. (Done in MicrosoftSQL).
+
 Once file contents are downloaded you should go into the "connect.txt" and
 replace the given credentials with the ones you must use to access your data
 base. The format of the file is as follows:
