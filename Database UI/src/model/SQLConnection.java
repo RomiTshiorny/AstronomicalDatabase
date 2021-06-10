@@ -1,10 +1,13 @@
 package model;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import java.util.Scanner;
 
 /**
  * This is the SQLConnection class that establishes a connection
@@ -31,13 +34,33 @@ public class SQLConnection {
 		 */
 		public SQLConnection() {
 			
+			/**read credentials from a file**/
+			String path,username,password,database;
+			
+			try {
+				Scanner fileScanner = new Scanner(new File("connect.txt"));
+				path = fileScanner.nextLine();
+				username = fileScanner.nextLine();
+				password = fileScanner.nextLine();
+				database = fileScanner.nextLine();
+				fileScanner.close();
+			} catch (FileNotFoundException e1) {
+				e1.printStackTrace();
+				//Alternative if file can't be read
+				path = "localhost\\";
+				username = "username";
+				password = "password";
+				database = "database";
+			}
+			
+			/**end of credential reading**/
 			connected = false;
-			String connectionUrl = "jdbc:sqlserver://localhost\\ROMISQLSERVER";
+			String connectionUrl = "jdbc:sqlserver://" + path;
 			
 			Properties info = new Properties();
-			info.put("user","sa");
-			info.put("password","romisqlpass");
-			info.put("database","Tshiorny_Romi_db");
+			info.put("user",username);
+			info.put("password",password);
+			info.put("database",database);
 			
 			
 			try {

@@ -1,0 +1,4 @@
+localhost\ROMISQLSERVER
+sa
+romisqlpass
+Tshiorny_Romi_db
