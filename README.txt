@@ -1,23 +1,15 @@
-NOTE: Executing might be a bit of an arduous process due to needing to install libaries for the SQL connection and configuring the enviroment (I used eclipse).
-Screenshots are provided for a glimpse at the application.
 
-A database file "Tshiorny_Romi_backend.sql" is provided to create the database on your local machine. (Done in MicrosoftSQL).
+A database file "Tshiorny_Romi_backend.sql" is provided to create the database on your local machine. (Done in MicrosoftSQL). File wont run unless this database exists locally.
+Once you create the database, download the Astrobase.jar and open it with an archive navigator (7-zip, Winzip, etc.). 
 
-All necessary files to execute are in src/model
-
-Once file contents are downloaded you should go into the "connect.txt" and
-replace the given credentials with the ones you must use to access your data
+Navigate to 'model >connect.txt' and open the file.
+Replace the given credentials with the ones you must use to access your data
 base. The format of the file is as follows:
 
 	1. Database path
 	2. Database username
 	3. Database password
 	4. Database name
-
-If the file is unable to be read, you can alternatively go into the "SQLConnection.java"
-file and modify the values in lines 50-53 to get access to your local database.
-
-Once the connection set up is done. Execute "UI.java" to run the program.
 
 The UI is able to do SELECT, INSERT, UPDATE, and DELETE calls on the database.
 
